@@ -28,20 +28,17 @@ const Login = () => {
         }
 
         try {
-            // First try without MFA token
             const res = await api.post("/auth/login", {
                 email: form.email,
                 password: form.password,
             });
 
             if (res.status === 206 || res.data.mfaRequired) {
-                // Server asking for MFA token
                 setStep(2);
                 return;
             }
 
             const { accessToken, refreshToken, user } = res.data.data;
-            // simulate same logic as in context
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("refreshToken", refreshToken);
             window.location.href = "/dashboard";

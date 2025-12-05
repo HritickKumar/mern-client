@@ -7,7 +7,6 @@ const api = axios.create({
     withCredentials: true,
 });
 
-// Small helpers to manage tokens in localStorage
 const ACCESS_TOKEN_KEY = "accessToken";
 const REFRESH_TOKEN_KEY = "refreshToken";
 
@@ -24,7 +23,6 @@ export const authStorage = {
     },
 };
 
-// Attach access token to every request
 api.interceptors.request.use(
     (config) => {
         const token = authStorage.getAccessToken();
@@ -36,7 +34,6 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Auto-refresh access token on 401
 let isRefreshing = false;
 let failedQueue = [];
 

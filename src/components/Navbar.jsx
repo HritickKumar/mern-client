@@ -17,7 +17,7 @@ const Navbar = () => {
         >
             <div>
                 <Link to="/" style={{ color: "white", textDecoration: "none" }}>
-                    <strong>MERN Auth</strong>
+                    <strong>Auth</strong>
                 </Link>
             </div>
             <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>

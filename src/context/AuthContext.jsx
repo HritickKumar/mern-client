@@ -1,13 +1,12 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api, { authStorage } from "../api/axiosInstance";
 
-const AuthContext = createContext(null);
+const AuthContext = createContext(undefined);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);     // {id,email,name,roles,isMFAEnabled}
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // On mount, try to fetch /users/me using existing access token
   useEffect(() => {
     const init = async () => {
       const token = authStorage.getAccessToken();
@@ -16,8 +15,8 @@ export const AuthProvider = ({ children }) => {
         return;
       }
       try {
-        const res = await api.get("/users/me");
-        setUser(res.data.data);
+        const result = await api.get("/users/me");
+        setUser(result.data.data);
       } catch {
         authStorage.clear();
       } finally {
@@ -31,12 +30,11 @@ export const AuthProvider = ({ children }) => {
     const body = { email, password };
     if (mfaToken) body.mfaToken = mfaToken;
 
-    const res = await api.post("/auth/login", body);
+    const result = await api.post("/auth/login", body);
 
-    // If backend sends mfaRequired (status 206), handle in page, not here.
-    if (!res.data.success) throw new Error(res.data.message);
+    if (!result.data.success) throw new Error(result.data.message);
 
-    const { accessToken, refreshToken, user } = res.data.data;
+    const { accessToken, refreshToken, user } = result.data.data;
 
     authStorage.setTokens(accessToken, refreshToken);
     setUser(user);
@@ -44,17 +42,32 @@ export const AuthProvider = ({ children }) => {
   };
 
   const loginWithOTP = async ({ email, otp }) => {
-    const res = await api.post("/auth/otp/verify", { email, otp });
-    const { accessToken, refreshToken, user } = res.data.data;
+    const cleanOtp = String(otp).trim();
+    if (!cleanOtp || cleanOtp.length < 4 || cleanOtp.length > 8) {
+      throw new Error("Please enter a valid OTP");
+    }
+    const payload = {
+      email: email.trim().toLowerCase(),
+      code: cleanOtp,
 
-    authStorage.setTokens(accessToken, refreshToken);
-    setUser(user);
-    return user;
+    };
+    try {
+      const res = await api.post("/auth/otp/verify", payload);
+
+      const { accessToken, refreshToken, user } = res.data.data;
+      authStorage.setTokens(accessToken, refreshToken);
+      setUser(user);
+      return user;
+    } catch (err) {
+      console.error("OTP verification failed:", err.response?.data);
+      throw new Error(err.response?.data?.message || "Invalid or expired OTP");
+    }
+
   };
 
   const register = async ({ email, password, name }) => {
-    const res = await api.post("/auth/register", { email, password, name });
-    return res.data;
+    const result = await api.post("/auth/register", { email, password, name });
+    return result.data;
   };
 
   const logout = async () => {
@@ -63,12 +76,13 @@ export const AuthProvider = ({ children }) => {
       if (refreshToken) {
         await api.post("/auth/logout", { refreshToken });
       }
-    } catch (e) {
-      // ignore
+    } catch (error) {
+      console.error('Auth init failed', error);
     }
     authStorage.clear();
     setUser(null);
   };
+
 
   const value = {
     user,
@@ -83,7 +97,12 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading ? children : <div>Loading...</div>}
+      {children}
+      {loading && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'grid', placeItems: 'center', zIndex: 9999 }}>
+          <div>Loading...</div>
+        </div>
+      )}
     </AuthContext.Provider>
   );
 };
