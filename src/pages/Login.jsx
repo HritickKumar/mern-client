@@ -37,10 +37,8 @@ const Login = () => {
                 setStep(2);
                 return;
             }
-
-            const { accessToken, refreshToken, user } = res.data.data;
+            const { accessToken } = res.data.data;
             localStorage.setItem("accessToken", accessToken);
-            localStorage.setItem("refreshToken", refreshToken);
             window.location.href = "/dashboard";
         } catch (err) {
             const msg =

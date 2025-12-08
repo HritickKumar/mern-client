@@ -7,19 +7,16 @@ const api = axios.create({
     withCredentials: true,
 });
 
-const ACCESS_TOKEN_KEY = "accessToken";
-const REFRESH_TOKEN_KEY = "refreshToken";
 
 export const authStorage = {
-    getAccessToken: () => localStorage.getItem(ACCESS_TOKEN_KEY),
-    getRefreshToken: () => localStorage.getItem(REFRESH_TOKEN_KEY),
-    setTokens: (accessToken, refreshToken) => {
-        if (accessToken) localStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-        if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
+    getAccessToken: () => localStorage.getItem("accessToken"),
+
+    setAccessToken: (accessToken) => {
+        if (accessToken) localStorage.setItem("accessToken", accessToken);
+
     },
     clear: () => {
-        localStorage.removeItem(ACCESS_TOKEN_KEY);
-        localStorage.removeItem(REFRESH_TOKEN_KEY);
+        localStorage.removeItem("accessToken");
     },
 };
 
@@ -53,19 +50,8 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        if (
-            error.response &&
-            error.response.status === 401 &&
-            !originalRequest._retry
-        ) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
-
-            const refreshToken = authStorage.getRefreshToken();
-            if (!refreshToken) {
-                authStorage.clear();
-                window.location.href = "/login";
-                return Promise.reject(error);
-            }
 
             if (isRefreshing) {
                 return new Promise((resolve, reject) => {
@@ -81,27 +67,27 @@ api.interceptors.response.use(
             isRefreshing = true;
 
             try {
-                const res = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
-                    refreshToken,
-                });
+                const res = await axios.post(
+                    `${API_BASE_URL}/auth/refresh-token`,
+                    {},
+                    { withCredentials: true }
+                );
 
-                const newAccess = res.data.data.accessToken;
-                const newRefresh = res.data.data.refreshToken;
+                const newAccessToken = res.data.data.accessToken;
 
-                authStorage.setTokens(newAccess, newRefresh);
+                authStorage.setAccessToken(newAccessToken);
+                api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+                processQueue(null, newAccessToken);
 
-                api.defaults.headers.common.Authorization = `Bearer ${newAccess}`;
-                processQueue(null, newAccess);
-                isRefreshing = false;
-
-                originalRequest.headers.Authorization = `Bearer ${newAccess}`;
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                 return api(originalRequest);
-            } catch (err) {
-                processQueue(err, null);
-                isRefreshing = false;
+            } catch (refreshError) {
+                processQueue(refreshError, null);
                 authStorage.clear();
                 window.location.href = "/login";
-                return Promise.reject(err);
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
             }
         }
 

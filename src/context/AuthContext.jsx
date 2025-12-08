@@ -34,9 +34,9 @@ export const AuthProvider = ({ children }) => {
 
     if (!result.data.success) throw new Error(result.data.message);
 
-    const { accessToken, refreshToken, user } = result.data.data;
+    const { accessToken, user } = result.data.data;
 
-    authStorage.setTokens(accessToken, refreshToken);
+    authStorage.setTokens(accessToken);
     setUser(user);
     return user;
   };
@@ -54,8 +54,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await api.post("/auth/otp/verify", payload);
 
-      const { accessToken, refreshToken, user } = res.data.data;
-      authStorage.setTokens(accessToken, refreshToken);
+      const { accessToken, user } = res.data.data;
+      authStorage.setTokens(accessToken);
       setUser(user);
       return user;
     } catch (err) {
@@ -72,15 +72,13 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const refreshToken = authStorage.getRefreshToken();
-      if (refreshToken) {
-        await api.post("/auth/logout", { refreshToken });
-      }
+      await api.post("/auth/logout");
     } catch (error) {
-      console.error('Auth init failed', error);
+      console.warn("Logout request failed ", error);
+    } finally {
+      authStorage.clear();
+      setUser(null);
     }
-    authStorage.clear();
-    setUser(null);
   };
 
 
