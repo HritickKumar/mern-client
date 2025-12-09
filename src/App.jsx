@@ -7,6 +7,7 @@ import OTPLogin from "./pages/OTPLogin";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import AdminUsers from "./pages/AdminUsers";
+import AdminPanel from "./pages/AdminPanel";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 
@@ -28,9 +29,8 @@ const App = () => {
         </Route>
 
         {/* Admin-only routes */}
-        <Route
-          element={<RoleRoute allowedRoles={["admin"]} />}
-        >
+        <Route element={<RoleRoute allowedRoles={["admin"]} />}>
+          <Route path="/admin" element={<AdminPanel />} />
           <Route path="/admin/users" element={<AdminUsers />} />
         </Route>
       </Routes>

@@ -36,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
     const { accessToken, user } = result.data.data;
 
-    authStorage.setTokens(accessToken);
+    authStorage.setAccessToken(accessToken);
     setUser(user);
     return user;
   };
@@ -46,23 +46,33 @@ export const AuthProvider = ({ children }) => {
     if (!cleanOtp || cleanOtp.length < 4 || cleanOtp.length > 8) {
       throw new Error("Please enter a valid OTP");
     }
+
     const payload = {
       email: email.trim().toLowerCase(),
       code: cleanOtp,
-
     };
+
     try {
       const res = await api.post("/auth/otp/verify", payload);
-
+      if (!res.data.success) {
+        throw new Error(res.data.message || "Invalid or expired OTP");
+      }
       const { accessToken, user } = res.data.data;
-      authStorage.setTokens(accessToken);
+
+      authStorage.setAccessToken(accessToken);
       setUser(user);
       return user;
-    } catch (err) {
-      console.error("OTP verification failed:", err.response?.data);
-      throw new Error(err.response?.data?.message || "Invalid or expired OTP");
-    }
 
+    } catch (err) {
+      console.error("OTP verification failed:", err.response?.data || err);
+      const message = err.response?.data?.message
+        || err.message
+      err.message?.includes("success")
+        ? err.message
+        : "Invalid or expired OTP";
+
+      throw new Error(message);
+    }
   };
 
   const register = async ({ email, password, name }) => {
