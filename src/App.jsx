@@ -11,7 +11,14 @@ import AdminPanel from "./pages/AdminPanel";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
 
+import ChatButton from "./components/ChatButton";
+import { useAuth } from "./context/AuthContext";
+import AdminChatPage from "./admin/AdminChatPage";
+
+
+
 const App = () => {
+  const { user } = useAuth();
   return (
     <>
       <Navbar />
@@ -26,14 +33,19 @@ const App = () => {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
+
         </Route>
 
         {/* Admin-only routes */}
         <Route element={<RoleRoute allowedRoles={["admin"]} />}>
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/admin/users" element={<AdminUsers />} />
+          <Route path="/admin/chat" element={<AdminChatPage />} />
         </Route>
       </Routes>
+      {user && user.roles.includes("user") && <ChatButton />}
+      {/* {user && user.roles.includes("admin") && <AdminChatButton />} */}
+
     </>
   );
 };

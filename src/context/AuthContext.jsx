@@ -1,5 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api, { authStorage } from "../api/axiosInstance";
+import { connectSocket } from "../socket";
+
 
 const AuthContext = createContext(undefined);
 
@@ -17,6 +19,12 @@ export const AuthProvider = ({ children }) => {
       try {
         const result = await api.get("/users/me");
         setUser(result.data.data);
+
+        setTimeout(() => {
+          connectSocket(token);
+        }, 300);
+
+
       } catch {
         authStorage.clear();
       } finally {
@@ -38,6 +46,9 @@ export const AuthProvider = ({ children }) => {
 
     authStorage.setAccessToken(accessToken);
     setUser(user);
+    setTimeout(() => {
+      connectSocket(accessToken);
+    }, 100);
     return user;
   };
 
@@ -61,6 +72,7 @@ export const AuthProvider = ({ children }) => {
 
       authStorage.setAccessToken(accessToken);
       setUser(user);
+      connectSocket(accessToken);
       return user;
 
     } catch (err) {
@@ -83,9 +95,13 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await api.post("/auth/logout");
+      if (getSocket()) getSocket().disconnect();
+
     } catch (error) {
       console.warn("Logout request failed ", error);
     } finally {
+
+
       authStorage.clear();
       setUser(null);
     }
