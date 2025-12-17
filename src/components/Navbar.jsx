@@ -39,13 +39,23 @@ const Navbar = () => {
                             Profile
                         </Link>
                         {user.roles?.includes("admin") && (
-                            <Link
-                                to="/admin/users"
-                                style={{ color: "white", textDecoration: "none" }}
-                            >
-                                Admin
-                            </Link>
+                            <>
+                                <Link
+                                    to="/admin/users"
+                                    style={{ color: "white", textDecoration: "none" }}
+                                >
+                                    Admin
+                                </Link>
+
+                                <Link
+                                    to="/admin/chat"
+                                    style={{ color: "white", textDecoration: "none" }}
+                                >
+                                    Admin-Chat
+                                </Link>
+                            </>
                         )}
+
                     </>
                 )}
                 {!user ? (

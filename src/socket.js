@@ -5,9 +5,12 @@ let socket = null;
 export const connectSocket = (token) => {
     if (socket && socket.connected) return socket;
 
-    socket = io("http://localhost:5000", {
+    socket = io(import.meta.env.VITE_SOCKET_URL, {
         auth: { token },
         transports: ["websocket"],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
     });
 
     socket.on("connect", () => {
@@ -26,4 +29,11 @@ export const getSocket = () => socket;
 export const sendChatMessage = (payload) => {
     if (!socket || !socket.connected) return;
     socket.emit("chat:send", payload);
+};
+export const disconnectSocket = () => {
+    if (socket) {
+        socket.disconnect();
+        socket = null;
+        console.log("Socket disconnected");
+    }
 };

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api, { authStorage } from "../api/axiosInstance";
-import { connectSocket } from "../socket";
+import { connectSocket, disconnectSocket } from "../socket";
 
 
 const AuthContext = createContext(undefined);
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await api.post("/auth/logout");
-      if (getSocket()) getSocket().disconnect();
+      disconnectSocket();
 
     } catch (error) {
       console.warn("Logout request failed ", error);

@@ -10,10 +10,9 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminPanel from "./pages/AdminPanel";
 import ProtectedRoute from "./components/ProtectedRoute";
 import RoleRoute from "./components/RoleRoute";
-
-import ChatButton from "./components/ChatButton";
 import { useAuth } from "./context/AuthContext";
 import AdminChatPage from "./admin/AdminChatPage";
+import ChatWidget from "./components/ChatWidget";
 
 
 
@@ -43,7 +42,7 @@ const App = () => {
           <Route path="/admin/chat" element={<AdminChatPage />} />
         </Route>
       </Routes>
-      {user && user.roles.includes("user") && <ChatButton />}
+      {user && user?.roles?.includes("user") && <ChatWidget />}
       {/* {user && user.roles.includes("admin") && <AdminChatButton />} */}
 
     </>
